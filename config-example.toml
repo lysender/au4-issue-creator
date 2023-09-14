@@ -1,0 +1,4 @@
+token = "token"
+base_url = "https://example.com/api"
+project_id = "123"
+issue_count = 10
