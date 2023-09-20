@@ -1,5 +1,5 @@
 use fake::Fake;
-use fake::faker::lorem::en::*;
+use fake::faker::company::en::CatchPhase;
 use rand::Rng;
 use reqwest::Client;
 
@@ -29,22 +29,23 @@ pub async fn run(config: Config) -> Result<()> {
     let mut handles = vec![];
 
     for _ in 0..=config.issue_count {
-        let epic = get_random_item(&epics, true);
-        let member = get_random_item(&members, true);
-        let status = get_random_item(&statuses, false);
-        let label = get_random_item(&labels, true);
+        let epic = get_random_item(&epics, 20);
+        let member = get_random_item(&members, 30);
+        let status = get_random_item(&statuses, 100);
+        let label = get_random_item(&labels, 30);
 
         let default_labels: Vec<String> = vec![];
 
-        let title: Vec<String> = Words(3..5).fake();
+        let title: String = CatchPhase().fake();
+        let description = format!("{}, {}, {}, {}", CatchPhase().fake::<String>(), CatchPhase().fake::<String>(), CatchPhase().fake::<String>(), CatchPhase().fake::<String>());
 
         let mut payload = CreateIssueBody {
             r#type: String::from("user_story"),
             epic_id: None,
             parent_id: None,
             assignee_id: None,
-            title: title.join(" "),
-            description: Some(String::from("desc")),
+            title,
+            description: Some(description),
             estimate_type: Some(String::from("hours")),
             estimate: Some(10),
             status: Some(String::from("status")),
@@ -93,7 +94,7 @@ async fn fetch_me(config: &Config) -> Result<User> {
         let user: User = response.json().await?;
         Ok(user)
     } else {
-        return Err(Box::from("Unable to fetch current user."));
+        Err(Box::from("Unable to fetch current user."))
     }
 }
 
@@ -109,23 +110,29 @@ async fn fetch_project(config: &Config) -> Result<Project> {
         let project: Project = response.json().await?;
         Ok(project)
     } else {
-        return Err(Box::from(format!("Unable to fetch project {}", config.project_id.as_str())));
+        Err(Box::from(format!("Unable to fetch project {}", config.project_id.as_str())))
     }
 }
 
-fn get_random_item<T>(items: &Vec<T>, allow_none: bool) -> Option<&T> {
-    match items.len() {
-        0 => None,
-        length => {
-            // Allow returning None from time to time
-            let max_length = match allow_none {
-                true => length,
-                false => length - 1,
-            };
-            let key = rand::thread_rng().gen_range(0..=max_length);
-            items.get(key)
-        }
+fn get_item_chance(chance: u32) -> bool {
+    if chance > 100 {
+        panic!("Chance must be between 0 to 100")
     }
+
+    let value = rand::thread_rng().gen_range(0..=100);
+    value <= chance
+}
+
+fn get_random_item<T>(items: &Vec<T>, chance: u32) -> Option<&T> {
+    let length = items.len();
+    let return_item = get_item_chance(chance);
+
+    if length > 0 && return_item {
+        let max_length = length - 1;
+        let key = rand::thread_rng().gen_range(0..=max_length);
+        return items.get(key);
+    }
+    None
 }
 
 async fn fetch_epics(config: &Config) -> Result<Vec<Issue>> {
@@ -140,7 +147,7 @@ async fn fetch_epics(config: &Config) -> Result<Vec<Issue>> {
         let issues: Vec<Issue> = response.json().await?;
         Ok(issues)
     } else {
-        return Err(Box::from(format!("Unable to fetch epics.")));
+        Err(Box::from(format!("Unable to fetch epics.")))
     }
 }
 
@@ -156,7 +163,7 @@ async fn fetch_members(config: &Config) -> Result<Vec<ProjectMember>> {
         let members: Vec<ProjectMember> = response.json().await?;
         Ok(members)
     } else {
-        return Err(Box::from(format!("Unable to fetch project members.")));
+        Err(Box::from(format!("Unable to fetch project members.")))
     }
 }
 
@@ -178,6 +185,6 @@ async fn create_issue(config: Config, payload: CreateIssueBody) -> Result<Issue>
         Ok(issue)
     } else {
         println!("{:?}", response.text().await?);
-        return Err(Box::from(format!("Unable to create new issue.")));
+        Err(Box::from(format!("Unable to create new issue.")))
     }
 }
