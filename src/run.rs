@@ -27,8 +27,9 @@ pub async fn run(config: Config) -> Result<()> {
     let members = fetch_members(&config).await?;
 
     let mut handles = vec![];
+    let max_count = config.issue_count - 1;
 
-    for _ in 0..=config.issue_count {
+    for _ in 0..=max_count {
         let epic = get_random_item(&epics, 20);
         let member = get_random_item(&members, 30);
         let status = get_random_item(&statuses, 100);

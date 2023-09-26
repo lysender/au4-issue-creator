@@ -1,6 +1,7 @@
-use std::env;
 use std::process;
 use config::Config;
+use config::Args;
+use clap::Parser;
 
 pub mod error;
 pub mod config;
@@ -9,8 +10,8 @@ pub mod run;
 
 #[tokio::main]
 async fn main() {
-    let args: Vec<String> = env::args().collect();
-    let config = Config::build(&args).unwrap_or_else(|err| {
+    let args = Args::parse();
+    let config = Config::build(args.config.as_str()).unwrap_or_else(|err| {
         eprintln!("{err}");
         process::exit(1);
     });

@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::Path;
 use serde::{Deserialize};
+use clap::Parser;
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct Config {
@@ -11,13 +12,8 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() != 2 {
-            return Err("Usage: issue-creator path/to/config.toml");
-        }
-
-        let arg1 = args[1].clone();
-        let filename = Path::new(arg1.as_str());
+    pub fn build(config_file: &str) -> Result<Config, &'static str> {
+        let filename = Path::new(config_file);
         let toml_string = match fs::read_to_string(filename) {
             Ok(str) => str,
             Err(_) => {
@@ -39,4 +35,14 @@ impl Config {
 
         Ok(config)
     }
+}
+
+
+/// CLI tool to create issues into a project
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+pub struct Args {
+    /// TOML configuration file
+    #[arg(short, long)]
+    pub config: String,
 }
