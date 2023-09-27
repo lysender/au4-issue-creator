@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use fake::Fake;
 use fake::faker::company::en::CatchPhase;
 use rand::Rng;
@@ -8,6 +10,7 @@ use crate::error::Result;
 use crate::model::{CreateIssueBody, Issue, IssueStatus, Label, Project, ProjectMember, User};
 
 pub async fn run(config: Config) -> Result<()> {
+    let timer = Instant::now();
     let current_user = fetch_me(&config).await?;
     println!("Logged in as: {}", current_user.username);
 
@@ -69,15 +72,51 @@ pub async fn run(config: Config) -> Result<()> {
 
         let config_copy = config.clone();
         let handle = tokio::spawn(async move {
-            create_issue(config_copy, payload).await.unwrap();
+            create_issue(config_copy, payload).await.unwrap()
         });
 
         handles.push(handle);
     }
 
+    // Gather stats
+    let total_reqs: u128 = handles.len().try_into().unwrap();
+    let mut min_duration: u128 = 0;
+    let mut max_duration: u128 = 0;
+    let avg_duration: u128;
+    let mut sum: u128 = 0;
+
     for handle in handles {
-        handle.await.unwrap();
+        let res = handle.await.unwrap();
+        if let Some(issue) = res.data {
+            println!("{}: {} --> {} ms", issue.key, issue.title, res.duration);
+        }
+
+        sum += res.duration;
+
+        if min_duration == 0 {
+            min_duration = res.duration;
+        } else if res.duration < min_duration {
+            min_duration = res.duration;
+        }
+
+        if res.duration > max_duration {
+            max_duration = res.duration;
+        }
     }
+
+    avg_duration = sum / total_reqs;
+
+    let rps: u128 = (sum / 1000) / total_reqs;
+    let total_time = timer.elapsed().as_millis();
+
+    // Print stats
+    println!("");
+    println!("Total requests: {}", total_reqs);
+    println!("Min: {} ms", min_duration);
+    println!("Avg: {} ms", avg_duration);
+    println!("Max: {} ms", max_duration);
+    println!("Request per seconds: {}", rps);
+    println!("Total duration: {} ms", total_time);
 
     Ok(())
 }
@@ -167,7 +206,29 @@ async fn fetch_members(config: &Config) -> Result<Vec<ProjectMember>> {
     }
 }
 
-async fn create_issue(config: Config, payload: CreateIssueBody) -> Result<Issue> {
+#[derive(Debug)]
+struct ResponseData<T> {
+    duration: u128,
+    data: Option<T>,
+}
+
+async fn create_issue(config: Config, payload: CreateIssueBody) -> Result<ResponseData<Issue>> {
+    let mut res: ResponseData<Issue> = ResponseData {
+        duration: 0,
+        data: None,
+    };
+
+    let d = Instant::now();
+    let create_res = do_create_issue(config, payload).await;
+    if let Ok(issue_res) = create_res {
+        res.data = Some(issue_res);
+    }
+
+    res.duration = d.elapsed().as_millis();
+    Ok(res)
+}
+
+async fn do_create_issue(config: Config, payload: CreateIssueBody) -> Result<Issue> {
     let url = format!("{}/projects/{}/issues", config.base_url.as_str(), config.project_id.as_str());
     let post_body = serde_json::to_string(&payload)?;
 
@@ -181,10 +242,9 @@ async fn create_issue(config: Config, payload: CreateIssueBody) -> Result<Issue>
 
     if response.status().is_success() {
         let issue: Issue = response.json().await?;
-        println!("{}: {}", issue.key, issue.title);
         Ok(issue)
     } else {
-        println!("{:?}", response.text().await?);
+        eprintln!("{:?}", response.text().await?);
         Err(Box::from(format!("Unable to create new issue.")))
     }
 }
