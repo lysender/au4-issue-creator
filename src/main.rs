@@ -6,6 +6,7 @@ use clap::Parser;
 pub mod error;
 pub mod config;
 pub mod model;
+pub mod crawler;
 pub mod run;
 
 #[tokio::main]
