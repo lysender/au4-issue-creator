@@ -1,4 +1,5 @@
 use std::time::Instant;
+use bigdecimal::BigDecimal;
 
 use fake::Fake;
 use fake::faker::company::en::CatchPhase;
@@ -8,6 +9,12 @@ use reqwest::Client;
 use crate::config::Config;
 use crate::error::Result;
 use crate::model::{CreateIssueBody, Issue, IssueStatus, Label, Project, ProjectMember, User};
+
+#[derive(Debug)]
+struct ResponseData<T> {
+    duration: u128,
+    data: Option<T>,
+}
 
 pub async fn run(config: Config) -> Result<()> {
     let timer = Instant::now();
@@ -79,16 +86,22 @@ pub async fn run(config: Config) -> Result<()> {
     }
 
     // Gather stats
-    let total_reqs: u128 = handles.len().try_into().unwrap();
+    let total_reqs: u32 = handles.len().try_into().unwrap();
+    let mut failed: u32 = 0;
     let mut min_duration: u128 = 0;
     let mut max_duration: u128 = 0;
-    let avg_duration: u128;
     let mut sum: u128 = 0;
 
     for handle in handles {
         let res = handle.await.unwrap();
-        if let Some(issue) = res.data {
-            println!("{}: {} --> {} ms", issue.key, issue.title, res.duration);
+        match res.data {
+            Some(issue) => {
+                println!("{}: {} --> {} ms", issue.key, issue.title, res.duration);
+            },
+            None => {
+                failed += 1;
+            }
+            
         }
 
         sum += res.duration;
@@ -104,19 +117,29 @@ pub async fn run(config: Config) -> Result<()> {
         }
     }
 
-    avg_duration = sum / total_reqs;
+    let succeed = total_reqs - failed;
+    let success_ratio: f64 = (f64::from(total_reqs) / f64::from(succeed)) * 100.0;
+    let success_ration_rounded = success_ratio.round();
+    let big_sum = BigDecimal::from(sum);
+    let big_total_reqs = BigDecimal::from(total_reqs);
+    let big_avg = big_sum/ big_total_reqs.clone();
 
-    let rps: u128 = (sum / 1000) / total_reqs;
     let total_time = timer.elapsed().as_millis();
+    let big_total_time = BigDecimal::from(total_time);
+    let big_rps: BigDecimal = big_total_reqs / (big_total_time / 1000.0);
+    let rps = big_rps.round(2);
 
     // Print stats
     println!("");
     println!("Total requests: {}", total_reqs);
+    println!("Succeed: {}", succeed);
+    println!("Failed: {}", failed);
+    println!("Success rate: {}%", success_ration_rounded);
     println!("Min: {} ms", min_duration);
-    println!("Avg: {} ms", avg_duration);
+    println!("Avg: {} ms", big_avg);
     println!("Max: {} ms", max_duration);
-    println!("Request per seconds: {}", rps);
-    println!("Total duration: {} ms", total_time);
+    println!("Requests per second: {}", rps);
+    println!("Run duration: {} ms", total_time);
 
     Ok(())
 }
@@ -204,12 +227,6 @@ async fn fetch_members(config: &Config) -> Result<Vec<ProjectMember>> {
     } else {
         Err(Box::from(format!("Unable to fetch project members.")))
     }
-}
-
-#[derive(Debug)]
-struct ResponseData<T> {
-    duration: u128,
-    data: Option<T>,
 }
 
 async fn create_issue(config: Config, payload: CreateIssueBody) -> Result<ResponseData<Issue>> {
