@@ -7,8 +7,13 @@ For the secret startup project.
 ## Usage
 
 ```shell
-issue-creator path/to/config.toml
+issue-creator --config path/to/config.toml COMMAND
 ```
+
+### Commands
+
+- create - Creates issues into the specified project in config file
+- help - Displays help
 
 ## Config
 
