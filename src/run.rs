@@ -79,8 +79,11 @@ pub async fn run(config: Config) -> Result<()> {
 
         let config_copy = config.clone();
         let handle = tokio::spawn(async move {
-            create_issue(config_copy, payload).await.unwrap()
+            create_issue(&config_copy, &payload).await.unwrap()
         });
+
+
+
 
         handles.push(handle);
     }
@@ -229,7 +232,7 @@ async fn fetch_members(config: &Config) -> Result<Vec<ProjectMember>> {
     }
 }
 
-async fn create_issue(config: Config, payload: CreateIssueBody) -> Result<ResponseData<Issue>> {
+async fn create_issue(config: &Config, payload: &CreateIssueBody) -> Result<ResponseData<Issue>> {
     let mut res: ResponseData<Issue> = ResponseData {
         duration: 0,
         data: None,
@@ -245,9 +248,9 @@ async fn create_issue(config: Config, payload: CreateIssueBody) -> Result<Respon
     Ok(res)
 }
 
-async fn do_create_issue(config: Config, payload: CreateIssueBody) -> Result<Issue> {
+async fn do_create_issue(config: &Config, payload: &CreateIssueBody) -> Result<Issue> {
     let url = format!("{}/projects/{}/issues", config.base_url.as_str(), config.project_id.as_str());
-    let post_body = serde_json::to_string(&payload)?;
+    let post_body = serde_json::to_string(payload)?;
 
     let response = Client::new()
         .post(url)
