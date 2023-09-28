@@ -1,7 +1,7 @@
-use std::fs;
+use std::{fs, path::PathBuf};
 use std::path::Path;
 use serde::Deserialize;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct Config {
@@ -12,8 +12,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn build(config_file: &str) -> Result<Config, &'static str> {
-        let filename = Path::new(config_file);
+    pub fn build(filename: &Path) -> Result<Config, &'static str> {
         let toml_string = match fs::read_to_string(filename) {
             Ok(str) => str,
             Err(_) => {
@@ -43,6 +42,15 @@ impl Config {
 #[command(author, version, about, long_about = None)]
 pub struct Args {
     /// TOML configuration file
-    #[arg(short, long)]
-    pub config: String,
+    #[arg(short, long, value_name = "FILE.toml")]
+    pub config: PathBuf,
+
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    /// Create issues into project specified in config file
+    Create,
 }
