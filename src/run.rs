@@ -33,6 +33,11 @@ pub async fn run(config: Config) -> Result<()> {
         statuses = preferences.issue_statuses;
     }
 
+    // Remove last status, should not create issues as done
+    if statuses.len() > 0 {
+        statuses.pop();
+    }
+
     let epics = fetch_epics(&config).await?;
     let members = fetch_members(&config).await?;
 
@@ -107,7 +112,6 @@ pub async fn run(config: Config) -> Result<()> {
             None => {
                 failed += 1;
             }
-            
         }
 
         sum += res.duration;
