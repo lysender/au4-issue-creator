@@ -87,11 +87,13 @@ pub async fn create_issue(config: &Config, payload: &CreateIssueBody) -> Result<
 
     let d = Instant::now();
     let create_res = do_create_issue(config, payload).await;
+    res.duration = d.elapsed().as_millis();
     if let Ok(issue_res) = create_res {
+        let issue_copy = issue_res.clone();
+        println!("{}: {} --> {} ms", issue_copy.key, issue_copy.title, res.duration);
         res.data = Some(issue_res);
     }
 
-    res.duration = d.elapsed().as_millis();
     Ok(res)
 }
 

@@ -35,6 +35,8 @@ pub async fn run(config: Config) -> Result<()> {
     let epics = fetch_epics(&config).await?;
     let members = fetch_members(&config).await?;
 
+    let create_timer = Instant::now();
+
     let mut handles = vec![];
 
     for _ in 0..config.issue_count {
@@ -99,13 +101,8 @@ pub async fn run(config: Config) -> Result<()> {
 
     for handle in handles {
         let res = handle.await.unwrap();
-        match res.data {
-            Some(issue) => {
-                println!("{}: {} --> {} ms", issue.key, issue.title, res.duration);
-            },
-            None => {
-                failed += 1;
-            }
+        if let None = res.data {
+            failed += 1;
         }
 
         sum += res.duration;
@@ -129,8 +126,9 @@ pub async fn run(config: Config) -> Result<()> {
     let big_avg = big_sum/ big_total_reqs.clone();
 
     let total_time = timer.elapsed().as_millis();
-    let big_total_time = BigDecimal::from(total_time);
-    let big_rps: BigDecimal = big_total_reqs / (big_total_time / 1000.0);
+    let total_create_time = create_timer.elapsed().as_millis();
+    let big_create_total_time = BigDecimal::from(total_create_time);
+    let big_rps: BigDecimal = big_total_reqs / (big_create_total_time / 1000.0);
     let rps = big_rps.round(2);
 
     // Print stats
