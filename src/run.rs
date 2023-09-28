@@ -47,7 +47,13 @@ pub async fn run(config: Config) -> Result<()> {
         let default_labels: Vec<String> = vec![];
 
         let title: String = CatchPhase().fake();
-        let description = format!("{}, {}, {}, {}", CatchPhase().fake::<String>(), CatchPhase().fake::<String>(), CatchPhase().fake::<String>(), CatchPhase().fake::<String>());
+        let description = format!(
+            "{}, {}, {}, {}",
+            CatchPhase().fake::<String>(),
+            CatchPhase().fake::<String>(),
+            CatchPhase().fake::<String>(),
+            CatchPhase().fake::<String>()
+        );
 
         let mut payload = CreateIssueBody {
             r#type: String::from("user_story"),
@@ -81,9 +87,6 @@ pub async fn run(config: Config) -> Result<()> {
         let handle = tokio::spawn(async move {
             create_issue(&config_copy, &payload).await.unwrap()
         });
-
-
-
 
         handles.push(handle);
     }
