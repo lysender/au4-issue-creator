@@ -46,7 +46,7 @@ pub struct Args {
     pub config: PathBuf,
 
     #[command(subcommand)]
-    command: Commands,
+    pub command: Commands,
 }
 
 #[derive(Subcommand, Debug)]
