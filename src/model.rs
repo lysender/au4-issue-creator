@@ -78,3 +78,4 @@ pub struct CreateIssueBody {
     pub status: Option<String>,
     pub labels: Vec<String>,
 }
+
