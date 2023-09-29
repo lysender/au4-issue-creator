@@ -119,7 +119,7 @@ pub async fn run(config: Config) -> Result<()> {
     }
 
     let succeed = total_reqs - failed;
-    let success_ratio: f64 = (f64::from(total_reqs) / f64::from(succeed)) * 100.0;
+    let success_ratio: f64 = (f64::from(succeed) / f64::from(total_reqs)) * 100.0;
     let success_ration_rounded = success_ratio.round();
     let big_sum = BigDecimal::from(sum);
     let big_total_reqs = BigDecimal::from(total_reqs);
