@@ -1,5 +1,6 @@
 use std::time::Instant;
 use reqwest::Client;
+use anyhow::anyhow;
 
 use crate::config::Config;
 use crate::error::Result;
@@ -23,8 +24,7 @@ pub async fn fetch_me(config: &Config) -> Result<User> {
         let user: User = response.json().await?;
         Ok(user)
     } else {
-        let message = format!("Unable to fetch current user. Error: {}", response.status());
-        Err(Box::from(message))
+        Err(anyhow!("Unable to fetch current user. Error: {}", response.status()))
     }
 }
 
@@ -40,8 +40,7 @@ pub async fn fetch_project(config: &Config) -> Result<Project> {
         let project: Project = response.json().await?;
         Ok(project)
     } else {
-        let message = format!("Unable to fetch project {}. Error: {}", config.project_id.as_str(), response.status());
-        Err(Box::from(message))
+        Err(anyhow!("Unable to fetch project {}. Error: {}", config.project_id.as_str(), response.status()))
     }
 }
 
@@ -57,8 +56,7 @@ pub async fn fetch_epics(config: &Config) -> Result<Vec<Issue>> {
         let issues: Vec<Issue> = response.json().await?;
         Ok(issues)
     } else {
-        let message = format!("Unable to fetch epics. Error: {}", response.status());
-        Err(Box::from(message))
+        Err(anyhow!("Unable to fetch epics. Error: {}", response.status()))
     }
 }
 
@@ -74,8 +72,7 @@ pub async fn fetch_members(config: &Config) -> Result<Vec<ProjectMember>> {
         let members: Vec<ProjectMember> = response.json().await?;
         Ok(members)
     } else {
-        let message = format!("Unable to fetch project members. Error: {}", response.status());
-        Err(Box::from(message))
+        Err(anyhow!("Unable to fetch project members. Error: {}", response.status()))
     }
 }
 
@@ -115,7 +112,7 @@ async fn do_create_issue(config: &Config, payload: &CreateIssueBody) -> Result<I
     } else {
         let message = format!("Unable to create issue. Error: {}", response.status());
         eprintln!("{}", message);
-        Err(Box::from(message))
+        Err(anyhow!(message))
     }
 }
 
