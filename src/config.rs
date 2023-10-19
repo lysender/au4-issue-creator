@@ -53,5 +53,11 @@ pub struct Args {
 pub enum Commands {
     /// Create issues into project specified in config file
     Create,
+
+    /// Crawl all issues of the specified project
+    CrawlIssues,
+
+    /// Craw all issues from all visible projects
+    CrawlAllIssues,
 }
 

@@ -24,6 +24,14 @@ pub struct Project {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct ProjectSlim {
+    pub id: String,
+    pub key: String,
+    pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ProjectPreferences {
     pub issue_statuses: Vec<IssueStatus>,
     pub labels: Vec<Label>,
@@ -79,3 +87,18 @@ pub struct CreateIssueBody {
     pub labels: Vec<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PaginationMeta {
+    pub page: u32,
+    pub per_page: u32,
+    pub total_records: u32,
+    pub total_pages: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PaginationResult<T> {
+    pub meta: PaginationMeta,
+    pub data: Vec<T>,
+}

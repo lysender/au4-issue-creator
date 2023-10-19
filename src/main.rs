@@ -32,6 +32,14 @@ async fn run_command(args: Args, config: Config) -> Result<()> {
             run::run(config).await?;
             Ok(())
         },
+        Commands::CrawlIssues => {
+            run::crawl_project_issues(config).await?;
+            Ok(())
+        },
+        Commands::CrawlAllIssues => {
+            run::crawl_all_projects_issues(config).await?;
+            Ok(())
+        }
     }
 }
 
