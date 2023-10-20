@@ -115,7 +115,7 @@ pub async fn run(config: Config) -> Result<()> {
 
     let succeed = total_reqs - failed;
     let success_ratio: f64 = (f64::from(succeed) / f64::from(total_reqs)) * 100.0;
-    let success_ration_rounded = success_ratio.round();
+    let success_ratio_rounded = success_ratio.round();
     let big_sum = BigDecimal::from(sum);
     let big_total_reqs = BigDecimal::from(total_reqs);
     let big_avg = big_sum/ big_total_reqs.clone();
@@ -132,7 +132,7 @@ pub async fn run(config: Config) -> Result<()> {
     println!("Total requests: {}", total_reqs);
     println!("Succeed: {}", succeed);
     println!("Failed: {}", failed);
-    println!("Success rate: {}%", success_ration_rounded);
+    println!("Success rate: {}%", success_ratio_rounded);
     println!("Min: {} ms", min_duration);
     println!("Avg: {} ms", avg);
     println!("Max: {} ms", max_duration);

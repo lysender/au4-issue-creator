@@ -31,10 +31,11 @@ pub async fn fetch_me(config: &Config) -> Result<User> {
 pub async fn fetch_projects(config: &Config, page: u32, per_page: u32) -> Result<PaginationResult<Project>> {
     let url = format!("{}/projects", config.base_url.as_str());
     let query_params = vec![
-        ("state", "active".to_string()),
+        ("status", "active".to_string()),
         ("page", page.to_string()),
         ("per_page", per_page.to_string()),
-        ("include", "meta".to_string()),
+        ("sort", "-lastActivityDate".to_string()),
+        ("include", "meta,activeSprint,members,organisation".to_string()),
     ];
 
     let response = Client::new()
@@ -58,8 +59,12 @@ pub async fn fetch_projects(config: &Config, page: u32, per_page: u32) -> Result
 
 pub async fn fetch_project(config: &Config, project_id: &str) -> Result<Project> {
     let url = format!("{}/projects/{}", config.base_url.as_str(), project_id);
+    let query_params = vec![
+        ("include", "organisation".to_string())
+    ];
     let response = Client::new()
         .get(url)
+        .query(&query_params)
         .bearer_auth(config.token.as_str())
         .send()
         .await?;
@@ -105,9 +110,18 @@ pub async fn fetch_statuses(config: &Config, project_id: &str) -> Result<Vec<Iss
 }
 
 pub async fn fetch_epics(config: &Config, project_id: &str) -> Result<Vec<Issue>> {
-    let url = format!("{}/projects/{}/issues/?type=epic&state=active", config.base_url.as_str(), project_id);
+    let url = format!("{}/projects/{}/issues", config.base_url.as_str(), project_id);
+    let query_params = vec![
+        ("type", "epic".to_string()),
+        ("state", "active".to_string()),
+        ("page", "1".to_string()),
+        ("per_page", "50".to_string()),
+        ("sort", "-createdAt".to_string()),
+        ("include", "createdBy,assignee,developmentUpdates,isFollower,subtasksCount".to_string()),
+    ];
     let response = Client::new()
         .get(url)
+        .query(&query_params)
         .bearer_auth(config.token.as_str())
         .send()
         .await?;
@@ -181,7 +195,8 @@ pub async fn fetch_issues(config: &Config, project_id: &str, page: u32, per_page
         ("state", "active".to_string()),
         ("page", page.to_string()),
         ("per_page", per_page.to_string()),
-        ("include", "meta".to_string()),
+        ("sort", "-createdAt".to_string()),
+        ("include", "createdBy,assignee,developmentUpdates,isFollower,subtasksCount,meta".to_string()),
     ];
 
     let response = Client::new()
@@ -221,9 +236,13 @@ pub async fn fetch_issue(config: &Config, project_id: &str, issue_id: &str) -> R
 
 async fn do_fetch_issue(config: &Config, project_id: &str, issue_id: &str) -> Result<Issue> {
     let url = format!("{}/projects/{}/issues/{}", config.base_url.as_str(), project_id, issue_id);
+    let query_params = vec![
+        ("include", "isCreator,isAssignee,isFollower,initiative,epic,parent,commitment,subtasksCount".to_string()),
+    ];
 
     let response = Client::new()
         .get(url)
+        .query(&query_params)
         .header(reqwest::header::CONTENT_TYPE, "application/json")
         .bearer_auth(config.token.as_str())
         .send()
