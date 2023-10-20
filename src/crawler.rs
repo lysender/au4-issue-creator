@@ -12,10 +12,14 @@ pub struct ResponseData<T> {
     pub data: Option<T>,
 }
 
+const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36";
+
 pub async fn fetch_me(config: &Config) -> Result<User> {
     let url = format!("{}/user", config.base_url);
     let response = Client::new()
         .get(url)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .header(reqwest::header::CONTENT_TYPE, "application/json")
         .bearer_auth(config.token.as_str())
         .send()
         .await?;
@@ -41,6 +45,7 @@ pub async fn fetch_projects(config: &Config, page: u32, per_page: u32) -> Result
     let response = Client::new()
         .get(url)
         .query(&query_params)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
         .header(reqwest::header::CONTENT_TYPE, "application/json")
         .bearer_auth(config.token.as_str())
         .send()
@@ -65,6 +70,8 @@ pub async fn fetch_project(config: &Config, project_id: &str) -> Result<Project>
     let response = Client::new()
         .get(url)
         .query(&query_params)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .header(reqwest::header::CONTENT_TYPE, "application/json")
         .bearer_auth(config.token.as_str())
         .send()
         .await?;
@@ -81,6 +88,8 @@ pub async fn fetch_labels(config: &Config, project_id: &str) -> Result<Vec<Label
     let url = format!("{}/projects/{}/labels", config.base_url.as_str(), project_id);
     let response = Client::new()
         .get(url)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .header(reqwest::header::CONTENT_TYPE, "application/json")
         .bearer_auth(config.token.as_str())
         .send()
         .await?;
@@ -97,6 +106,8 @@ pub async fn fetch_statuses(config: &Config, project_id: &str) -> Result<Vec<Iss
     let url = format!("{}/projects/{}/issueStatuses", config.base_url.as_str(), project_id);
     let response = Client::new()
         .get(url)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .header(reqwest::header::CONTENT_TYPE, "application/json")
         .bearer_auth(config.token.as_str())
         .send()
         .await?;
@@ -122,6 +133,8 @@ pub async fn fetch_epics(config: &Config, project_id: &str) -> Result<Vec<Issue>
     let response = Client::new()
         .get(url)
         .query(&query_params)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .header(reqwest::header::CONTENT_TYPE, "application/json")
         .bearer_auth(config.token.as_str())
         .send()
         .await?;
@@ -138,6 +151,8 @@ pub async fn fetch_members(config: &Config, project_id: &str) -> Result<Vec<Proj
     let url = format!("{}/iam/projects/{}/members/?status=active", config.base_url.as_str(), project_id);
     let response = Client::new()
         .get(url)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .header(reqwest::header::CONTENT_TYPE, "application/json")
         .bearer_auth(config.token.as_str())
         .send()
         .await?;
@@ -173,6 +188,7 @@ async fn do_create_issue(config: &Config, project_id: &str, payload: &CreateIssu
 
     let response = Client::new()
         .post(url)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
         .header(reqwest::header::CONTENT_TYPE, "application/json")
         .body(post_body)
         .bearer_auth(config.token.as_str())
@@ -202,6 +218,7 @@ pub async fn fetch_issues(config: &Config, project_id: &str, page: u32, per_page
     let response = Client::new()
         .get(url)
         .query(&query_params)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
         .header(reqwest::header::CONTENT_TYPE, "application/json")
         .bearer_auth(config.token.as_str())
         .send()
@@ -243,6 +260,7 @@ async fn do_fetch_issue(config: &Config, project_id: &str, issue_id: &str) -> Re
     let response = Client::new()
         .get(url)
         .query(&query_params)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
         .header(reqwest::header::CONTENT_TYPE, "application/json")
         .bearer_auth(config.token.as_str())
         .send()
