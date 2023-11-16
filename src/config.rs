@@ -9,6 +9,7 @@ pub struct Config {
     pub base_url: String,
     pub project_id: String,
     pub issue_count: u32,
+    pub issue_type: Option<String>,
 }
 
 impl Config {
@@ -30,6 +31,24 @@ impl Config {
 
         if config.issue_count == 0 || config.issue_count > 100 {
             return Err("Issue count must be between 1 to 100");
+        }
+
+        // Validate issue type if present
+        if let Some(issue_type) = &config.issue_type {
+            let issue_types = vec![
+                String::from("initiative"),
+                String::from("epic"),
+                String::from("user_story"),
+                String::from("task"),
+                String::from("issue"),
+                String::from("feature"),
+                String::from("bug"),
+                String::from("test_case"),
+            ];
+            
+            if !issue_types.contains(&issue_type) {
+                return Err("Issue type is invalid.");
+            }
         }
 
         Ok(config)

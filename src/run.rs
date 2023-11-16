@@ -7,8 +7,8 @@ use rand::Rng;
 
 use crate::config::Config;
 use crate::error::Result;
-use crate::model::{CreateIssueBody, PaginationResult, Project, ProjectSlim};
-use crate::crawler::{fetch_me, fetch_project, fetch_epics, fetch_members, create_issue, fetch_labels, fetch_statuses, fetch_issues, fetch_issue, fetch_projects};
+use crate::model::{CreateIssueBody, PaginationResult, Project, ProjectSlim, Issue, IssueStatus};
+use crate::crawler::{fetch_me, fetch_project, fetch_epics, fetch_members, create_issue, fetch_labels, fetch_statuses, fetch_issues, fetch_issue, fetch_projects, fetch_initiatives};
 
 pub async fn run(config: Config) -> Result<()> {
     let timer = Instant::now();
@@ -27,18 +27,45 @@ pub async fn run(config: Config) -> Result<()> {
         statuses.pop();
     }
 
+    let initiatives = fetch_initiatives(&config, config.project_id.as_str()).await?;
     let epics = fetch_epics(&config, config.project_id.as_str()).await?;
     let members = fetch_members(&config, config.project_id.as_str()).await?;
+    let hours = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+    let points = vec![1, 2, 3, 5, 8, 13, 21];
+
+    let project_preferences = project.preferences.unwrap();
+
+    // Default issue type can be configured
+    let issue_type = match config.issue_type.clone() {
+        Some(value) => value,
+        None => project_preferences.issue_type.clone(),
+    };
 
     let create_timer = Instant::now();
 
     let mut handles = vec![];
 
     for _ in 0..config.issue_count {
-        let epic = get_random_item(&epics, 20);
         let member = get_random_item(&members, 30);
-        let status = get_random_item(&statuses, 100);
         let label = get_random_item(&labels, 30);
+
+        let mut initiative: Option<&Issue> = None;
+        let mut epic: Option<&Issue> = None;
+        let mut status: Option<&IssueStatus> = None;
+
+        // Initiatives and epics do not have these properties
+        match issue_type.as_str() {
+            "initiative" => {
+                // Do nothing...
+            },
+            "epic" => {
+                initiative = get_random_item(&initiatives, 20);
+            },
+            _ => {
+                epic = get_random_item(&epics, 20);
+                status = get_random_item(&statuses, 100);
+            }
+        };
 
         let default_labels: Vec<String> = vec![];
 
@@ -52,17 +79,30 @@ pub async fn run(config: Config) -> Result<()> {
         );
 
         let mut payload = CreateIssueBody {
-            r#type: String::from("user_story"),
+            r#type: issue_type.clone(),
+            initiative_id: None,
             epic_id: None,
             parent_id: None,
             assignee_id: None,
             title,
             description: Some(description),
-            estimate_type: Some(String::from("hours")),
+            estimate_type: Some(project_preferences.estimate_type.clone()),
             estimate: Some(10),
-            status: Some(String::from("status")),
+            status: None, 
             labels: default_labels,
         };
+
+        if project_preferences.estimate_type == String::from("points") {
+            let estimate = get_random_item(&points, 100);
+            payload.estimate = Some(*estimate.unwrap());
+        } else {
+            let estimate = get_random_item(&hours, 100);
+            payload.estimate = Some(*estimate.unwrap());
+        }
+
+        if let Some(initiative_value) = initiative {
+            payload.initiative_id = Some(String::from(initiative_value.id.as_str()));
+        }
 
         if let Some(epic_value) = epic {
             payload.epic_id = Some(String::from(epic_value.id.as_str()));
