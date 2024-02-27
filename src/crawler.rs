@@ -1,26 +1,13 @@
-use std::time::Instant;
-use reqwest::Client;
 use anyhow::anyhow;
+use reqwest::Client;
+use std::time::Instant;
 
 use crate::config::Config;
 use crate::error::Result;
 use crate::model::{
-    CreateIssueBody,
-    Issue,
-    Project,
-    ProjectMember,
-    User,
-    Label,
-    IssueStatus,
-    PaginationResult,
-    Comment,
-    IssueTimelineItem,
-    Actor,
-    Organisation,
+    Actor, Authz, ChannelKey, Comment, CreateIssueBody, Issue, IssueStatus, IssueTimelineItem,
+    Label, Organisation, PaginationResult, Project, ProjectMember, Repository, User,
     UserPreference,
-    Authz,
-    Repository,
-    ChannelKey
 };
 
 #[derive(Debug)]
@@ -46,7 +33,10 @@ pub async fn fetch_iam(config: &Config) -> Result<Actor> {
         let actor: Actor = response.json().await?;
         Ok(actor)
     } else {
-        Err(anyhow!("Unable to fetch current actor. Error: {}", response.status()))
+        Err(anyhow!(
+            "Unable to fetch current actor. Error: {}",
+            response.status()
+        ))
     }
 }
 
@@ -64,7 +54,10 @@ pub async fn fetch_my_organisation(config: &Config) -> Result<Organisation> {
         let org: Organisation = response.json().await?;
         Ok(org)
     } else {
-        Err(anyhow!("Unable to fetch current organisation. Error: {}", response.status()))
+        Err(anyhow!(
+            "Unable to fetch current organisation. Error: {}",
+            response.status()
+        ))
     }
 }
 
@@ -82,7 +75,10 @@ pub async fn fetch_me(config: &Config) -> Result<User> {
         let user: User = response.json().await?;
         Ok(user)
     } else {
-        Err(anyhow!("Unable to fetch current user. Error: {}", response.status()))
+        Err(anyhow!(
+            "Unable to fetch current user. Error: {}",
+            response.status()
+        ))
     }
 }
 
@@ -100,17 +96,27 @@ pub async fn fetch_user_preferences(config: &Config) -> Result<Vec<UserPreferenc
         let prefs: Vec<UserPreference> = response.json().await?;
         Ok(prefs)
     } else {
-        Err(anyhow!("Unable to fetch current user preferences. Error: {}", response.status()))
+        Err(anyhow!(
+            "Unable to fetch current user preferences. Error: {}",
+            response.status()
+        ))
     }
 }
-pub async fn fetch_projects(config: &Config, page: u32, per_page: u32) -> Result<PaginationResult<Project>> {
+pub async fn fetch_projects(
+    config: &Config,
+    page: u32,
+    per_page: u32,
+) -> Result<PaginationResult<Project>> {
     let url = format!("{}/projects", config.base_url.as_str());
     let query_params = vec![
         ("status", "active".to_string()),
         ("page", page.to_string()),
         ("per_page", per_page.to_string()),
         ("sort", "-lastActivityDate".to_string()),
-        ("include", "meta,activeSprint,members,organisation".to_string()),
+        (
+            "include",
+            "meta,activeSprint,members,organisation".to_string(),
+        ),
     ];
 
     let response = Client::new()
@@ -126,18 +132,18 @@ pub async fn fetch_projects(config: &Config, page: u32, per_page: u32) -> Result
         let result: PaginationResult<Project> = response.json().await?;
         Ok(result)
     } else {
-        let message = format!("Unable to fetch project listing. Error: {}", response.status());
+        let message = format!(
+            "Unable to fetch project listing. Error: {}",
+            response.status()
+        );
         eprintln!("{}", message);
         Err(anyhow!(message))
     }
 }
 
-
 pub async fn fetch_project(config: &Config, project_id: &str) -> Result<Project> {
     let url = format!("{}/projects/{}", config.base_url.as_str(), project_id);
-    let query_params = vec![
-        ("include", "organisation".to_string())
-    ];
+    let query_params = vec![("include", "organisation".to_string())];
     let response = Client::new()
         .get(url)
         .query(&query_params)
@@ -151,12 +157,20 @@ pub async fn fetch_project(config: &Config, project_id: &str) -> Result<Project>
         let project: Project = response.json().await?;
         Ok(project)
     } else {
-        Err(anyhow!("Unable to fetch project {}. Error: {}", config.project_id.as_str(), response.status()))
+        Err(anyhow!(
+            "Unable to fetch project {}. Error: {}",
+            config.project_id.as_str(),
+            response.status()
+        ))
     }
 }
 
 pub async fn fetch_project_authz(config: &Config, project_id: &str) -> Result<Authz> {
-    let url = format!("{}/user/authContext/projects/{}", config.base_url.as_str(), project_id);
+    let url = format!(
+        "{}/user/authContext/projects/{}",
+        config.base_url.as_str(),
+        project_id
+    );
     let response = Client::new()
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -169,12 +183,20 @@ pub async fn fetch_project_authz(config: &Config, project_id: &str) -> Result<Au
         let authz: Authz = response.json().await?;
         Ok(authz)
     } else {
-        Err(anyhow!("Unable to fetch project permissions {}. Error: {}", config.project_id.as_str(), response.status()))
+        Err(anyhow!(
+            "Unable to fetch project permissions {}. Error: {}",
+            config.project_id.as_str(),
+            response.status()
+        ))
     }
 }
 
 pub async fn fetch_labels(config: &Config, project_id: &str) -> Result<Vec<Label>> {
-    let url = format!("{}/projects/{}/labels", config.base_url.as_str(), project_id);
+    let url = format!(
+        "{}/projects/{}/labels",
+        config.base_url.as_str(),
+        project_id
+    );
     let response = Client::new()
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -187,12 +209,20 @@ pub async fn fetch_labels(config: &Config, project_id: &str) -> Result<Vec<Label
         let labels: Vec<Label> = response.json().await?;
         Ok(labels)
     } else {
-        Err(anyhow!("Unable to fetch project labels {}. Error: {}", project_id, response.status()))
+        Err(anyhow!(
+            "Unable to fetch project labels {}. Error: {}",
+            project_id,
+            response.status()
+        ))
     }
 }
 
 pub async fn fetch_statuses(config: &Config, project_id: &str) -> Result<Vec<IssueStatus>> {
-    let url = format!("{}/projects/{}/issueStatuses", config.base_url.as_str(), project_id);
+    let url = format!(
+        "{}/projects/{}/issueStatuses",
+        config.base_url.as_str(),
+        project_id
+    );
     let response = Client::new()
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -205,19 +235,30 @@ pub async fn fetch_statuses(config: &Config, project_id: &str) -> Result<Vec<Iss
         let statuses: Vec<IssueStatus> = response.json().await?;
         Ok(statuses)
     } else {
-        Err(anyhow!("Unable to fetch project issue statuses {}. Error: {}", project_id, response.status()))
+        Err(anyhow!(
+            "Unable to fetch project issue statuses {}. Error: {}",
+            project_id,
+            response.status()
+        ))
     }
 }
 
 pub async fn fetch_initiatives(config: &Config, project_id: &str) -> Result<Vec<Issue>> {
-    let url = format!("{}/projects/{}/issues", config.base_url.as_str(), project_id);
+    let url = format!(
+        "{}/projects/{}/issues",
+        config.base_url.as_str(),
+        project_id
+    );
     let query_params = vec![
         ("type", "initiative".to_string()),
         ("state", "active".to_string()),
         ("page", "1".to_string()),
         ("per_page", "50".to_string()),
         ("sort", "-createdAt".to_string()),
-        ("include", "createdBy,assignee,developmentUpdates,isFollower,subtasksCount".to_string()),
+        (
+            "include",
+            "createdBy,assignee,developmentUpdates,isFollower,subtasksCount".to_string(),
+        ),
     ];
     let response = Client::new()
         .get(url)
@@ -232,18 +273,28 @@ pub async fn fetch_initiatives(config: &Config, project_id: &str) -> Result<Vec<
         let issues: Vec<Issue> = response.json().await?;
         Ok(issues)
     } else {
-        Err(anyhow!("Unable to fetch epics. Error: {}", response.status()))
+        Err(anyhow!(
+            "Unable to fetch epics. Error: {}",
+            response.status()
+        ))
     }
 }
 pub async fn fetch_epics(config: &Config, project_id: &str) -> Result<Vec<Issue>> {
-    let url = format!("{}/projects/{}/issues", config.base_url.as_str(), project_id);
+    let url = format!(
+        "{}/projects/{}/issues",
+        config.base_url.as_str(),
+        project_id
+    );
     let query_params = vec![
         ("type", "epic".to_string()),
         ("state", "active".to_string()),
         ("page", "1".to_string()),
         ("per_page", "50".to_string()),
         ("sort", "-createdAt".to_string()),
-        ("include", "createdBy,assignee,developmentUpdates,isFollower,subtasksCount".to_string()),
+        (
+            "include",
+            "createdBy,assignee,developmentUpdates,isFollower,subtasksCount".to_string(),
+        ),
     ];
     let response = Client::new()
         .get(url)
@@ -258,12 +309,19 @@ pub async fn fetch_epics(config: &Config, project_id: &str) -> Result<Vec<Issue>
         let issues: Vec<Issue> = response.json().await?;
         Ok(issues)
     } else {
-        Err(anyhow!("Unable to fetch epics. Error: {}", response.status()))
+        Err(anyhow!(
+            "Unable to fetch epics. Error: {}",
+            response.status()
+        ))
     }
 }
 
 pub async fn fetch_members(config: &Config, project_id: &str) -> Result<Vec<ProjectMember>> {
-    let url = format!("{}/iam/projects/{}/members/?status=active", config.base_url.as_str(), project_id);
+    let url = format!(
+        "{}/iam/projects/{}/members/?status=active",
+        config.base_url.as_str(),
+        project_id
+    );
     let response = Client::new()
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -276,12 +334,22 @@ pub async fn fetch_members(config: &Config, project_id: &str) -> Result<Vec<Proj
         let members: Vec<ProjectMember> = response.json().await?;
         Ok(members)
     } else {
-        Err(anyhow!("Unable to fetch project members. Error: {}", response.status()))
+        Err(anyhow!(
+            "Unable to fetch project members. Error: {}",
+            response.status()
+        ))
     }
 }
 
-pub async fn fetch_project_repositories(config: &Config, project_id: &str) -> Result<Vec<Repository>> {
-    let url = format!("{}/projects/{}/repositories", config.base_url.as_str(), project_id);
+pub async fn fetch_project_repositories(
+    config: &Config,
+    project_id: &str,
+) -> Result<Vec<Repository>> {
+    let url = format!(
+        "{}/projects/{}/repositories",
+        config.base_url.as_str(),
+        project_id
+    );
     let response = Client::new()
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -294,12 +362,19 @@ pub async fn fetch_project_repositories(config: &Config, project_id: &str) -> Re
         let list: Vec<Repository> = response.json().await?;
         Ok(list)
     } else {
-        Err(anyhow!("Unable to fetch project repositories. Error: {}", response.status()))
+        Err(anyhow!(
+            "Unable to fetch project repositories. Error: {}",
+            response.status()
+        ))
     }
 }
 
 pub async fn fetch_project_channel(config: &Config, project_id: &str) -> Result<ChannelKey> {
-    let url = format!("{}/projects/{}/channels/key", config.base_url.as_str(), project_id);
+    let url = format!(
+        "{}/projects/{}/channels/key",
+        config.base_url.as_str(),
+        project_id
+    );
     let response = Client::new()
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -312,11 +387,18 @@ pub async fn fetch_project_channel(config: &Config, project_id: &str) -> Result<
         let key: ChannelKey = response.json().await?;
         Ok(key)
     } else {
-        Err(anyhow!("Unable to fetch project channel key. Error: {}", response.status()))
+        Err(anyhow!(
+            "Unable to fetch project channel key. Error: {}",
+            response.status()
+        ))
     }
 }
 
-pub async fn create_issue(config: &Config, project_id: &str, payload: &CreateIssueBody) -> Result<ResponseData<Issue>> {
+pub async fn create_issue(
+    config: &Config,
+    project_id: &str,
+    payload: &CreateIssueBody,
+) -> Result<ResponseData<Issue>> {
     let mut res: ResponseData<Issue> = ResponseData {
         duration: 0,
         data: None,
@@ -326,15 +408,26 @@ pub async fn create_issue(config: &Config, project_id: &str, payload: &CreateIss
     let create_res = do_create_issue(config, project_id, payload).await;
     res.duration = d.elapsed().as_millis();
     if let Ok(issue_res) = create_res {
-        println!("{}: {} --> {} ms", issue_res.key, issue_res.title, res.duration);
+        println!(
+            "{}: {} --> {} ms",
+            issue_res.key, issue_res.title, res.duration
+        );
         res.data = Some(issue_res);
     }
 
     Ok(res)
 }
 
-async fn do_create_issue(config: &Config, project_id: &str, payload: &CreateIssueBody) -> Result<Issue> {
-    let url = format!("{}/projects/{}/issues", config.base_url.as_str(), project_id);
+async fn do_create_issue(
+    config: &Config,
+    project_id: &str,
+    payload: &CreateIssueBody,
+) -> Result<Issue> {
+    let url = format!(
+        "{}/projects/{}/issues",
+        config.base_url.as_str(),
+        project_id
+    );
     let post_body = serde_json::to_string(payload)?;
 
     let response = Client::new()
@@ -356,14 +449,26 @@ async fn do_create_issue(config: &Config, project_id: &str, payload: &CreateIssu
     }
 }
 
-pub async fn fetch_issues(config: &Config, project_id: &str, page: u32, per_page: u32) -> Result<PaginationResult<Issue>> {
-    let url = format!("{}/projects/{}/issues", config.base_url.as_str(), project_id);
+pub async fn fetch_issues(
+    config: &Config,
+    project_id: &str,
+    page: u32,
+    per_page: u32,
+) -> Result<PaginationResult<Issue>> {
+    let url = format!(
+        "{}/projects/{}/issues",
+        config.base_url.as_str(),
+        project_id
+    );
     let query_params = vec![
         ("state", "active".to_string()),
         ("page", page.to_string()),
         ("per_page", per_page.to_string()),
         ("sort", "-createdAt".to_string()),
-        ("include", "createdBy,assignee,developmentUpdates,isFollower,subtasksCount,meta".to_string()),
+        (
+            "include",
+            "createdBy,assignee,developmentUpdates,isFollower,subtasksCount,meta".to_string(),
+        ),
     ];
 
     let response = Client::new()
@@ -379,13 +484,20 @@ pub async fn fetch_issues(config: &Config, project_id: &str, page: u32, per_page
         let result: PaginationResult<Issue> = response.json().await?;
         Ok(result)
     } else {
-        let message = format!("Unable to fetch issue listing. Error: {}", response.status());
+        let message = format!(
+            "Unable to fetch issue listing. Error: {}",
+            response.status()
+        );
         eprintln!("{}", message);
         Err(anyhow!(message))
     }
 }
 
-pub async fn fetch_issue(config: &Config, project_id: &str, issue_id: &str) -> Result<ResponseData<Issue>> {
+pub async fn fetch_issue(
+    config: &Config,
+    project_id: &str,
+    issue_id: &str,
+) -> Result<ResponseData<Issue>> {
     let mut res: ResponseData<Issue> = ResponseData {
         duration: 0,
         data: None,
@@ -395,7 +507,10 @@ pub async fn fetch_issue(config: &Config, project_id: &str, issue_id: &str) -> R
     let create_res = do_fetch_issue(config, project_id, issue_id).await;
     res.duration = d.elapsed().as_millis();
     if let Ok(issue_res) = create_res {
-        println!("{}: {} --> {} ms", issue_res.key, issue_res.title, res.duration);
+        println!(
+            "{}: {} --> {} ms",
+            issue_res.key, issue_res.title, res.duration
+        );
         res.data = Some(issue_res);
     }
 
@@ -403,10 +518,17 @@ pub async fn fetch_issue(config: &Config, project_id: &str, issue_id: &str) -> R
 }
 
 async fn do_fetch_issue(config: &Config, project_id: &str, issue_id: &str) -> Result<Issue> {
-    let url = format!("{}/projects/{}/issues/{}", config.base_url.as_str(), project_id, issue_id);
-    let query_params = vec![
-        ("include", "isCreator,isAssignee,isFollower,initiative,epic,parent,commitment,subtasksCount".to_string()),
-    ];
+    let url = format!(
+        "{}/projects/{}/issues/{}",
+        config.base_url.as_str(),
+        project_id,
+        issue_id
+    );
+    let query_params = vec![(
+        "include",
+        "isCreator,isAssignee,isFollower,initiative,epic,parent,commitment,subtasksCount"
+            .to_string(),
+    )];
 
     let response = Client::new()
         .get(url)
@@ -427,7 +549,13 @@ async fn do_fetch_issue(config: &Config, project_id: &str, issue_id: &str) -> Re
     }
 }
 
-pub async fn fetch_issue_comments(config: &Config, project_id: &str, issue_id: &str, page: u32, per_page: u32) -> Result<ResponseData<PaginationResult<Comment>>> {
+pub async fn fetch_issue_comments(
+    config: &Config,
+    project_id: &str,
+    issue_id: &str,
+    page: u32,
+    per_page: u32,
+) -> Result<ResponseData<PaginationResult<Comment>>> {
     let mut res: ResponseData<PaginationResult<Comment>> = ResponseData {
         duration: 0,
         data: None,
@@ -443,8 +571,19 @@ pub async fn fetch_issue_comments(config: &Config, project_id: &str, issue_id: &
     Ok(res)
 }
 
-pub async fn do_fetch_issue_comments(config: &Config, project_id: &str, issue_id: &str, page: u32, per_page: u32) -> Result<PaginationResult<Comment>> {
-    let url = format!("{}/projects/{}/issues/{}/comments", config.base_url.as_str(), project_id, issue_id);
+pub async fn do_fetch_issue_comments(
+    config: &Config,
+    project_id: &str,
+    issue_id: &str,
+    page: u32,
+    per_page: u32,
+) -> Result<PaginationResult<Comment>> {
+    let url = format!(
+        "{}/projects/{}/issues/{}/comments",
+        config.base_url.as_str(),
+        project_id,
+        issue_id
+    );
     let query_params = vec![
         ("page", page.to_string()),
         ("per_page", per_page.to_string()),
@@ -464,20 +603,30 @@ pub async fn do_fetch_issue_comments(config: &Config, project_id: &str, issue_id
         let result: PaginationResult<Comment> = response.json().await?;
         Ok(result)
     } else {
-        let message = format!("Unable to fetch issue comment listing. Error: {}", response.status());
+        let message = format!(
+            "Unable to fetch issue comment listing. Error: {}",
+            response.status()
+        );
         eprintln!("{}", message);
         Err(anyhow!(message))
     }
 }
 
-pub async fn fetch_issue_timeline_items(config: &Config, project_id: &str, issue_id: &str, page: u32, per_page: u32) -> Result<ResponseData<PaginationResult<IssueTimelineItem>>> {
+pub async fn fetch_issue_timeline_items(
+    config: &Config,
+    project_id: &str,
+    issue_id: &str,
+    page: u32,
+    per_page: u32,
+) -> Result<ResponseData<PaginationResult<IssueTimelineItem>>> {
     let mut res: ResponseData<PaginationResult<IssueTimelineItem>> = ResponseData {
         duration: 0,
         data: None,
     };
 
     let d = Instant::now();
-    let listing_res = do_fetch_issue_timeline_items(config, project_id, issue_id, page, per_page).await;
+    let listing_res =
+        do_fetch_issue_timeline_items(config, project_id, issue_id, page, per_page).await;
     res.duration = d.elapsed().as_millis();
     if let Ok(listing) = listing_res {
         res.data = Some(listing);
@@ -486,8 +635,19 @@ pub async fn fetch_issue_timeline_items(config: &Config, project_id: &str, issue
     Ok(res)
 }
 
-pub async fn do_fetch_issue_timeline_items(config: &Config, project_id: &str, issue_id: &str, page: u32, per_page: u32) -> Result<PaginationResult<IssueTimelineItem>> {
-    let url = format!("{}/projects/{}/issues/{}/timelineitems", config.base_url.as_str(), project_id, issue_id);
+pub async fn do_fetch_issue_timeline_items(
+    config: &Config,
+    project_id: &str,
+    issue_id: &str,
+    page: u32,
+    per_page: u32,
+) -> Result<PaginationResult<IssueTimelineItem>> {
+    let url = format!(
+        "{}/projects/{}/issues/{}/timelineitems",
+        config.base_url.as_str(),
+        project_id,
+        issue_id
+    );
     let query_params = vec![
         ("page", page.to_string()),
         ("per_page", per_page.to_string()),
@@ -508,13 +668,20 @@ pub async fn do_fetch_issue_timeline_items(config: &Config, project_id: &str, is
         let result: PaginationResult<IssueTimelineItem> = response.json().await?;
         Ok(result)
     } else {
-        let message = format!("Unable to fetch issue timelime itemlisting. Error: {}", response.status());
+        let message = format!(
+            "Unable to fetch issue timelime itemlisting. Error: {}",
+            response.status()
+        );
         eprintln!("{}", message);
         Err(anyhow!(message))
     }
 }
 
-pub async fn fetch_issue_page_resources(config: &Config, project_id: &str, issue_id: &str) -> Result<PaginationResult<Comment>> {
+pub async fn fetch_issue_page_resources(
+    config: &Config,
+    project_id: &str,
+    issue_id: &str,
+) -> Result<PaginationResult<Comment>> {
     // Fetch all resources in an issue page
     // Fetch iam
     // Fetch organisation
@@ -544,4 +711,3 @@ pub async fn fetch_issue_page_resources(config: &Config, project_id: &str, issue
     // Fetch issue comments count
     Err(anyhow!("Error"))
 }
-

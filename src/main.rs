@@ -1,15 +1,15 @@
-use std::process;
+use clap::Parser;
+use config::Args;
 use config::Commands;
 use config::Config;
-use config::Args;
-use clap::Parser;
+use std::process;
 
 use crate::error::Result;
 
-pub mod error;
 pub mod config;
-pub mod model;
 pub mod crawler;
+pub mod error;
+pub mod model;
 pub mod run;
 
 #[tokio::main]
@@ -31,15 +31,14 @@ async fn run_command(args: Args, config: Config) -> Result<()> {
         Commands::Create => {
             run::run(config).await?;
             Ok(())
-        },
+        }
         Commands::CrawlIssues => {
             run::crawl_project_issues(config).await?;
             Ok(())
-        },
+        }
         Commands::CrawlAllIssues => {
             run::crawl_all_projects_issues(config).await?;
             Ok(())
         }
     }
 }
-

@@ -1,7 +1,7 @@
-use std::{fs, path::PathBuf};
-use std::path::Path;
-use serde::Deserialize;
 use clap::{Parser, Subcommand};
+use serde::Deserialize;
+use std::path::Path;
+use std::{fs, path::PathBuf};
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct Config {
@@ -45,7 +45,7 @@ impl Config {
                 String::from("bug"),
                 String::from("test_case"),
             ];
-            
+
             if !issue_types.contains(&issue_type) {
                 return Err("Issue type is invalid.");
             }
@@ -54,7 +54,6 @@ impl Config {
         Ok(config)
     }
 }
-
 
 /// CLI tool to create issues into a project
 #[derive(Parser, Debug)]
@@ -79,4 +78,3 @@ pub enum Commands {
     /// Craw all issues from all visible projects
     CrawlAllIssues,
 }
-

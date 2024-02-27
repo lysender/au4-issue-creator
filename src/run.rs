@@ -1,14 +1,17 @@
-use std::time::Instant;
 use bigdecimal::BigDecimal;
+use std::time::Instant;
 
-use fake::Fake;
 use fake::faker::company::en::CatchPhase;
+use fake::Fake;
 use rand::Rng;
 
 use crate::config::Config;
+use crate::crawler::{
+    create_issue, fetch_epics, fetch_initiatives, fetch_issue, fetch_issues, fetch_labels,
+    fetch_me, fetch_members, fetch_project, fetch_projects, fetch_statuses,
+};
 use crate::error::Result;
-use crate::model::{CreateIssueBody, PaginationResult, Project, ProjectSlim, Issue, IssueStatus};
-use crate::crawler::{fetch_me, fetch_project, fetch_epics, fetch_members, create_issue, fetch_labels, fetch_statuses, fetch_issues, fetch_issue, fetch_projects, fetch_initiatives};
+use crate::model::{CreateIssueBody, Issue, IssueStatus, PaginationResult, Project, ProjectSlim};
 
 pub async fn run(config: Config) -> Result<()> {
     let timer = Instant::now();
@@ -30,7 +33,9 @@ pub async fn run(config: Config) -> Result<()> {
     let initiatives = fetch_initiatives(&config, config.project_id.as_str()).await?;
     let epics = fetch_epics(&config, config.project_id.as_str()).await?;
     let members = fetch_members(&config, config.project_id.as_str()).await?;
-    let hours = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+    let hours = vec![
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    ];
     let points = vec![1, 2, 3, 5, 8, 13, 21];
 
     let project_preferences = project.preferences.unwrap();
@@ -57,10 +62,10 @@ pub async fn run(config: Config) -> Result<()> {
         match issue_type.as_str() {
             "initiative" => {
                 // Do nothing...
-            },
+            }
             "epic" => {
                 initiative = get_random_item(&initiatives, 20);
-            },
+            }
             _ => {
                 epic = get_random_item(&epics, 20);
                 status = get_random_item(&statuses, 100);
@@ -88,7 +93,7 @@ pub async fn run(config: Config) -> Result<()> {
             description: Some(description),
             estimate_type: Some(project_preferences.estimate_type.clone()),
             estimate: Some(10),
-            status: None, 
+            status: None,
             labels: default_labels,
         };
 
@@ -121,7 +126,9 @@ pub async fn run(config: Config) -> Result<()> {
 
         let config_copy = config.clone();
         let handle = tokio::spawn(async move {
-            create_issue(&config_copy, config_copy.project_id.as_str(), &payload).await.unwrap()
+            create_issue(&config_copy, config_copy.project_id.as_str(), &payload)
+                .await
+                .unwrap()
         });
 
         handles.push(handle);
@@ -154,11 +161,12 @@ pub async fn run(config: Config) -> Result<()> {
     }
 
     let succeed = total_reqs - failed;
-    let big_success_ratio = (BigDecimal::from(succeed) / BigDecimal::from(total_reqs)) * BigDecimal::from(100);
+    let big_success_ratio =
+        (BigDecimal::from(succeed) / BigDecimal::from(total_reqs)) * BigDecimal::from(100);
     let success_ratio = big_success_ratio.round(2);
     let big_sum = BigDecimal::from(sum);
     let big_total_reqs = BigDecimal::from(total_reqs);
-    let big_avg = big_sum/ big_total_reqs.clone();
+    let big_avg = big_sum / big_total_reqs.clone();
     let avg = big_avg.round(2);
 
     let total_time = timer.elapsed().as_millis();
@@ -237,7 +245,9 @@ pub async fn crawl_project_issues(config: Config) -> Result<()> {
                 let project_id_copy = project_id.clone();
                 let issue_id = issue.id.clone();
                 let handle = tokio::spawn(async move {
-                    fetch_issue(&config_copy, project_id_copy.as_str(), issue_id.as_str()).await.unwrap()
+                    fetch_issue(&config_copy, project_id_copy.as_str(), issue_id.as_str())
+                        .await
+                        .unwrap()
                 });
 
                 handles.push(handle);
@@ -276,11 +286,12 @@ pub async fn crawl_project_issues(config: Config) -> Result<()> {
     }
 
     let succeed = total_reqs - failed;
-    let big_success_ratio = (BigDecimal::from(succeed) / BigDecimal::from(total_reqs)) * BigDecimal::from(100);
+    let big_success_ratio =
+        (BigDecimal::from(succeed) / BigDecimal::from(total_reqs)) * BigDecimal::from(100);
     let success_ratio = big_success_ratio.round(2);
     let big_sum = BigDecimal::from(sum);
     let big_total_reqs = BigDecimal::from(total_reqs);
-    let big_avg = big_sum/ big_total_reqs.clone();
+    let big_avg = big_sum / big_total_reqs.clone();
     let avg = big_avg.round(2);
 
     let total_time = timer.elapsed().as_millis();
@@ -321,9 +332,11 @@ pub async fn crawl_all_projects_issues(config: Config) -> Result<()> {
     let mut max_duration: u128 = 0;
     let mut sum: u128 = 0;
 
-
     for project in projects {
-        println!("Crawling issues for project {}:{}", project.key, project.name);
+        println!(
+            "Crawling issues for project {}:{}",
+            project.key, project.name
+        );
         let project_id = project.id;
 
         let mut has_more = true;
@@ -342,7 +355,9 @@ pub async fn crawl_all_projects_issues(config: Config) -> Result<()> {
                     let project_id_copy = project_id.clone();
                     let issue_id = issue.id.clone();
                     let handle = tokio::spawn(async move {
-                        fetch_issue(&config_copy, project_id_copy.as_str(), issue_id.as_str()).await.unwrap()
+                        fetch_issue(&config_copy, project_id_copy.as_str(), issue_id.as_str())
+                            .await
+                            .unwrap()
                     });
 
                     handles.push(handle);
@@ -381,11 +396,12 @@ pub async fn crawl_all_projects_issues(config: Config) -> Result<()> {
     }
 
     let succeed = total_reqs - failed;
-    let big_success_ratio = (BigDecimal::from(succeed) / BigDecimal::from(total_reqs)) * BigDecimal::from(100);
+    let big_success_ratio =
+        (BigDecimal::from(succeed) / BigDecimal::from(total_reqs)) * BigDecimal::from(100);
     let success_ratio = big_success_ratio.round(2);
     let big_sum = BigDecimal::from(sum);
     let big_total_reqs = BigDecimal::from(total_reqs);
-    let big_avg = big_sum/ big_total_reqs.clone();
+    let big_avg = big_sum / big_total_reqs.clone();
     let avg = big_avg.round(2);
 
     let total_time = timer.elapsed().as_millis();
@@ -423,7 +439,7 @@ async fn collect_projects(config: &Config) -> Result<Vec<ProjectSlim>> {
                 ids.push(ProjectSlim {
                     id: project.id,
                     key: project.key,
-                    name: project.name
+                    name: project.name,
                 });
             }
             // See if there are still more items
